@@ -1,6 +1,7 @@
 require('dotenv').config();
 const tmi = require('tmi.js');
 const vars = require('./src/vars');
+const cmdHandler = require('./src/twitch/CommandHandler');
 const channels = require('./channels.json');
 const client = new tmi.client({
   identity: {
@@ -29,6 +30,6 @@ client.on('error', (error) => {
   console.log(error);
 });
 
-client.on('message', async (channel, userstate, message) => {
-  console.log(userstate);
+client.on('message', async (channel, userstate, message, self) => {
+  cmdHandler(client, channel, userstate, message, self);
 });

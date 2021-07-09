@@ -6,6 +6,7 @@ const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 const request = require('request');
 const handlebars = require('handlebars');
+const { pronouns } = require('../Pronouns');
 
 const app = Express();
 
@@ -108,8 +109,17 @@ app.get(
   passport.authenticate('twitch', { failureRedirect: '/', successRedirect: '/' })
 );
 
-app.get('/api/pronouns', (req, res) => {
-  res.send(['she', 'her']);
+app.get('/api/pronouns/:user', async (req, res) => {
+  var user = req.params.user;
+  if (!user) return res.sendStatus(404);
+  pronouns
+    .getIdPronouns(user)
+    .then((pronouns) => {
+      res.send(pronouns);
+    })
+    .catch((err) => {
+      res.sendStatus(404);
+    });
 });
 
 app.listen(process.env.PORT, () => {
