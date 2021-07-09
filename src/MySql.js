@@ -36,7 +36,7 @@ module.exports = class MySql {
   }
 
   async init() {
-    var sql = await promisify(fs.readFile)('../../init.sql', 'utf8');
+    var sql = await promisify(fs.readFile)(__dirname + '/../init.sql', 'utf8');
     this.query(sql).catch((err) => {
       console.log(err);
     });
