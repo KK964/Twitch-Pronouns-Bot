@@ -5,9 +5,9 @@ const { promisify } = require('util');
 module.exports = class MySql {
   constructor() {
     this.connection = mysql.createConnection({
-      host: process.env.HOST,
-      user: process.env.USER,
-      password: process.env.PASSWORD,
+      host: process.env.DATABASE_HOST,
+      user: process.env.DATABASE_USER,
+      password: process.env.DATABASE_PASSWORD,
       multipleStatements: true,
       bigNumberStrings: true,
     });
