@@ -16,7 +16,6 @@ module.exports = class TwitchApi {
       fetch(url)
         .then((response) => response.json())
         .then((response) => {
-          console.log(response);
           resolve(response);
         })
         .catch((err) => {
@@ -40,6 +39,27 @@ module.exports = class TwitchApi {
         .then((result) => result.json())
         .then(resolve)
         .catch(reject);
+    });
+  }
+
+  userData(id) {
+    return new Promise((resolve, reject) => {
+      var url = `https://api.twitch.tv/helix/users?id=${id}`;
+      var options = {
+        method: 'GET',
+        headers: {
+          'Client-ID': process.env.TWITCH_CLIENT_ID,
+          Authorization: `Bearer ${this.clientCredentials}`,
+        },
+      };
+      fetch(url, options)
+        .then((result) => result.json())
+        .then((response) => {
+          resolve(response);
+        })
+        .catch((err) => {
+          reject(err);
+        });
     });
   }
 
