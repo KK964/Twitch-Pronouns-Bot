@@ -1,0 +1,14 @@
+.pronouns-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-pronouns {
+  display: flex;
+  flex-direction: row;
+  margin-top: 2em;
+}
+
+.user-pronouns > div {
+  margin-right: 2em;
+}

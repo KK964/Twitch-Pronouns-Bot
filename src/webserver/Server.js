@@ -1,14 +1,22 @@
 const Express = require('express');
-const vars = require('../vars');
+const app = Express();
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(server);
+
 const cors = require('cors');
-const session = require('express-session');
 const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
-const request = require('request');
-const handlebars = require('handlebars');
-const { pronouns } = require('../Pronouns');
+const expressSession = require('express-session');
 
-const app = Express();
+const request = require('request');
+const ejs = require('ejs');
+
+const vars = require('../vars');
+
+const { pronouns, channels } = require('../Pronouns');
+const { twitchApi, mysql } = require('../vars');
 
 app.use(
   cors({
@@ -18,14 +26,23 @@ app.use(
   })
 );
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-  })
-);
-app.use(Express.static('public'));
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
+
+var session = expressSession({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+});
+
+io.use((socket, next) => {
+  session(socket.request, socket.request.res || {}, next);
+});
+
+app.use(session);
+
+app.use(Express.static(__dirname + '/public'));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -84,21 +101,11 @@ passport.use(
   )
 );
 
-var template = handlebars.compile(`
-<html><table>
-    <tr><th>Access Token</th><td>{{accessToken}}</td></tr>
-    <tr><th>Refresh Token</th><td>{{refreshToken}}</td></tr>
-    <tr><th>Display Name</th><td>{{data.[0].display_name}}</td></tr>
-    <tr><th>Bio</th><td>{{data.[0].description}}</td></tr>
-    <tr><th>Image</th><td>{{data.[0].profile_image_url}}</td></tr>
-</table></html>`);
-
 app.get('/', (req, res) => {
   if (req.session && req.session.passport && req.session.passport.user) {
-    console.log(req.session.passport.user);
-    res.send(template(req.session.passport.user));
+    res.render('index.ejs', { template: 'dashboard', vars: req.session.passport.user });
   } else {
-    res.send('<html><a href="/auth/twitch">Log in with Twitch</a></html>');
+    res.render('index.ejs', { template: 'login', vars: null });
   }
 });
 
@@ -122,6 +129,62 @@ app.get('/api/pronouns/:user', async (req, res) => {
     });
 });
 
-app.listen(process.env.PORT, () => {
+io.on('connection', (socket) => {
+  if (!socket.request.session || !socket.request.session?.passport) {
+    socket.emit('error', 'No session');
+    socket.disconnect();
+    console.log('Resetting user session');
+  } else console.log('New user connected', socket.id, socket.request.session);
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected', socket.id);
+  });
+
+  socket.on('usersInChat', () => {
+    console.log(
+      socket.request.session.passport.user.data[0].login + ' requesting users in their chat'
+    );
+    twitchApi
+      .getUsersChat(socket.request.session.passport.user.data[0].login)
+      .then((users) => {
+        socket.emit('usersInChat', users.chatters);
+      })
+      .catch(() => {
+        socket.emit('usersInChat', []);
+      });
+  });
+
+  socket.on('getPronouns', (user, callback) => {
+    console.log('User requesting pronouns for', user);
+    pronouns.getUserPronouns(user).then((pronouns) => {
+      console.log(pronouns);
+      callback({ pronouns });
+    });
+  });
+
+  socket.on('invited', async (callback) => {
+    if (await channels.channelAdded(socket.request.session.passport.user.data[0].id))
+      callback({ invited: true });
+    else callback({ invited: false });
+  });
+
+  socket.on('invite', async (callback) => {
+    console.log('User requesting to be invited');
+    if (await channels.channelAdded(socket.request.session.passport.user.data[0].id))
+      return callback({ success: false, message: 'Your channel is already added!' });
+    if (await channels.addChannel(socket.request.session.passport.user.data[0].id))
+      return callback({ success: true, message: 'Your channel has been added!' });
+    return callback({ success: false, message: 'An error occurred!' });
+  });
+
+  socket.on('remove', async (callback) => {
+    console.log('User requesting to be removed');
+    if (await channels.removeChannel(socket.request.session.passport.user.data[0].id))
+      return callback({ success: true, message: 'Your channel has been removed!' });
+    return callback({ success: false, message: 'An error occurred!' });
+  });
+});
+
+server.listen(process.env.PORT, () => {
   console.log('Server listening on port ' + process.env.PORT);
 });

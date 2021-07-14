@@ -1,0 +1,104 @@
+<%- include('partials/head', {title:'Pronouns Dashboard'}) %>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<link rel="stylesheet" href="dashboard.css" />
+<script>
+  var socket = io();
+
+  const sessionID = localStorage.getItem('sessionID');
+
+  const userPronouns = new Map();
+
+  if (sessionID) {
+    socket.auth = { sessionID };
+    socket.connect();
+  }
+
+  socket.on('connect', function () {
+    console.log('connected to socket');
+    socket.emit('subscribe', 'pronouns');
+    socket.emit('usersInChat');
+    socket.emit('invited', (isInvited) => {
+      console.log(isInvited);
+      if (isInvited.invited)
+        $('.invite')
+          .first()
+          .append(
+            '<span>The pronouns bot is in your chat! <a onclick="uninvite()">Remove Now</a></span>'
+          );
+      else
+        $('.invite')
+          .first()
+          .append(
+            '<span>The pronouns bot is not in your chat! <a onclick="invite()">Invite Now</a></span>'
+          );
+    });
+  });
+  socket.on('error', (err) => {
+    location.reload();
+  });
+
+  socket.on('usersInChat', async (users) => {
+    console.log('usersInChat', users);
+    if (users.length == 0) return;
+    for (var i of Object.keys(users)) {
+      if (users[i].length == 0) continue;
+      for (var j of users[i]) {
+        var pronouns = await getUsersPronouns(j);
+        addUserToList(generateUserPronounsHtml(j, pronouns));
+      }
+    }
+  });
+
+  function invite() {
+    socket.emit('invite', (response) => {
+      $('.invite')
+        .first()
+        .first()
+        .replaceWith('<span>' + response.message + '</span>');
+    });
+  }
+
+  function uninvite() {
+    socket.emit('remove', (response) => {
+      $('.invite')
+        .first()
+        .first()
+        .replaceWith('<span>' + response.message + '</span>');
+    });
+  }
+
+  socket.on('newPronoun', (userPronoun) => {
+    console.log('newPronoun', userPronoun);
+    userPronouns.set(userPronoun.user, userPronoun.pronouns);
+  });
+
+  function getUsersPronouns(user) {
+    return new Promise((resolve, reject) => {
+      if (userPronouns.has(user)) return resolve(userPronouns.get(user));
+      socket.emit('getPronouns', user, (pronouns) => {
+        pronouns = pronouns.pronouns || 'Unknown';
+        console.log(pronouns);
+        userPronouns.set(user, pronouns);
+        resolve(pronouns);
+      });
+    });
+  }
+
+  function addUserToList(html) {
+    $('.pronouns-container').append(html);
+  }
+
+  function generateUserPronounsHtml(user, pronouns) {
+    return `
+      <div class="user-pronouns", id="{user}">
+        <div class="name">${user}</div>
+        <div class="pronouns">${pronouns}</div>
+      </div>
+      `;
+  }
+</script>
+<body>
+  <div class="invite"></div>
+  <div class="pronouns-container"></div>
+</body>
