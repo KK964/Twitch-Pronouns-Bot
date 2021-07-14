@@ -12,8 +12,6 @@ Work In Progress, please self host until finished!
 - Fill in your `.env` file
   - Refer to [Twitch Docs](https://dev.twitch.tv/docs/authentication/#registration)
   - Database uses MySql
-- Duplicate `channels.example.json` and call it `channels.json`
-  - Put list of channels to watch chat of in file
 - Configure [Streamlabs Chatbox](https://streamlabs.com/dashboard#/chatbox)
 
 #### Streamlabs ChatBox:

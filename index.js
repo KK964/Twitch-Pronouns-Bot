@@ -1,6 +1,7 @@
 require('dotenv').config();
 const tmi = require('tmi.js');
 const vars = require('./src/vars');
+const Queue = require('tmi.js/lib/timer');
 const cmdHandler = require('./src/twitch/CommandHandler');
 const channels = require('./channels.json');
 const client = new tmi.client({
@@ -8,7 +9,6 @@ const client = new tmi.client({
     username: process.env.TWITCH_USERNAME,
     password: process.env.TWITCH_PASSWORD,
   },
-  channels: channels,
 });
 
 client.connect();
@@ -16,7 +16,22 @@ client.connect();
 client.on('connected', () => {
   console.log('connected');
   require('./src/webserver/Server');
+  console.log('Joining Channels');
+  joinChannels();
 });
+
+function joinChannels() {
+  vars.mysql.query('SELECT * FROM channels', []).then((rows) => {
+    const joinQueue = new Queue(300);
+    rows.forEach((row) => {
+      joinQueue.add(async () => {
+        const channel = await vars.twitchApi.userData(row.channel);
+        client.join(channel.data[0].login);
+      });
+    });
+    joinQueue.next();
+  });
+}
 
 client.on('disconnected', () => {
   console.log('disconnected');
