@@ -47,10 +47,49 @@ function getIdPronouns(id) {
   });
 }
 
+function channelAdded(channel) {
+  return new Promise((res, rej) => {
+    mysql
+      .query('SELECT * FROM channels WHERE channel=?', [channel])
+      .then((rows) => {
+        if (rows.length > 0) return res(true);
+        return res(false);
+      })
+      .catch((err) => res(false));
+  });
+}
+
+function addChannel(channel) {
+  return new Promise((res, rej) => {
+    mysql
+      .query('INSERT INTO channels (channel) VALUES (?)', [channel])
+      .then((rows) => {
+        return res(true);
+      })
+      .catch((err) => res(false));
+  });
+}
+
+function removeChannel(channel) {
+  return new Promise((res, rej) => {
+    mysql
+      .query('DELETE FROM channels WHERE channel=?', [channel])
+      .then((rows) => {
+        return res(true);
+      })
+      .catch((err) => res(false));
+  });
+}
+
 module.exports = {
   setPronouns,
   pronouns: {
     getUserPronouns,
     getIdPronouns,
+  },
+  channels: {
+    channelAdded,
+    addChannel,
+    removeChannel,
   },
 };
