@@ -2,7 +2,8 @@ const { Client } = require('tmi.js');
 const { pronouns, setPronouns } = require('../Pronouns');
 const { mysql, twitchApi } = require('../vars');
 
-const pronounRegex = /(([a-z]+)\/([a-z]+))/gi;
+const pronounRegex = /(([a-z]+)((\/([a-z]+))+)?)/gi;
+const doubleSpaceRegex = /( )( +)/g;
 
 /**
  * @param {Client} client
@@ -13,7 +14,9 @@ const pronounRegex = /(([a-z]+)\/([a-z]+))/gi;
 module.exports = (client, channel, userstate, message, self) => {
   if (self) return;
   if (!message.toLowerCase().startsWith('!')) return;
+  message = message.replace(doubleSpaceRegex, ' ');
   var args = message.substring(1).split(' ');
+  if (args[0] === '') args.shift();
   if (!args[0].toLowerCase().startsWith('pronoun')) return;
   var command = args[1].toLowerCase();
   switch (command) {
@@ -27,9 +30,9 @@ module.exports = (client, channel, userstate, message, self) => {
     }
     case 'set': {
       if (args.length < 3 || !pronounRegex.test(args[2]))
-        return client.say(channel, 'You need to supply pronouns! Ex: she/her');
+        return client.say(channel, 'You need to supply pronouns! Ex: she/her, she/her/they, any');
       var userPronouns = args[2].match(pronounRegex)[0];
-      userPronouns.toLocaleLowerCase();
+      userPronouns = userPronouns.toLowerCase();
       userPronouns = userPronouns.split('/');
       if (userPronouns.length > 4)
         return client.say(channel, 'You only use up to 4 pronouns, sorry!');
