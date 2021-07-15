@@ -4,7 +4,10 @@ Allow Users to set their pronouns in your stream!
 
 ## Use Official Pronouns Bot
 
-Work In Progress, please self host until finished!
+- Go to [pronouns.kmods.dev](https://pronouns.kmods.dev/)
+- Sign in with Twitch
+- Click `Invite Now`
+- [Setup Streamlabs Chatbox to display pronouns](#streamlabs-chatbox)
 
 ## Setup Self Hosting
 
@@ -14,7 +17,7 @@ Work In Progress, please self host until finished!
   - Database uses MySql
 - Configure [Streamlabs Chatbox](https://streamlabs.com/dashboard#/chatbox)
 
-#### Streamlabs ChatBox:
+## Streamlabs ChatBox:
 
 - Enable Custom HTML/CSS
 - Go to the JS tab and paste the following into it
@@ -22,6 +25,8 @@ Work In Progress, please self host until finished!
 ```js
 var pronouns = new Map();
 var noPronouns = new Map();
+
+const DOMAIN = 'https://pronouns.kmods.dev';
 
 document.addEventListener('onLoad', function (obj) {});
 
@@ -32,7 +37,7 @@ function getPronouns(userid) {
     return 'unk';
   }
   return new Promise((res, rej) => {
-    $.get(YOUR DOMAIN + '/api/pronouns/' + userid, (data) => {
+    $.get(DOMAIN + '/api/pronouns/' + userid, (data) => {
       pronouns.set(userid, data);
       res(pronouns.get(userid));
     }).catch((err) => {
@@ -58,15 +63,15 @@ async function updateUsername(element, userId) {
 }
 ```
 
-- `YOUR DOMAIN`
+- `DOMAIN`
   - Self Hosting
     - Change to your domain
   - Not Self Hosting
-    - Set to `'https://pronouns.kmods.dev'`
+    - Don't change
 - Click Save Settings
 
 ## Todo
 
 - [ ] Dashboard for streamers to view users Pronouns watching the stream
-- [ ] Bot channels database
+- [x] Bot channels database
 - [ ] Invite Bot page
