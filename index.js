@@ -3,7 +3,6 @@ const tmi = require('tmi.js');
 const vars = require('./src/vars');
 const Queue = require('tmi.js/lib/timer');
 const cmdHandler = require('./src/twitch/CommandHandler');
-const channels = require('./channels.json');
 const client = new tmi.client({
   identity: {
     username: process.env.TWITCH_USERNAME,
