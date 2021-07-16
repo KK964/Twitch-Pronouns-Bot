@@ -3,7 +3,11 @@ const app = Express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+  },
+});
 
 const cors = require('cors');
 const passport = require('passport');
@@ -130,6 +134,7 @@ app.get('/api/pronouns/:user', async (req, res) => {
 });
 
 io.on('connection', (socket) => {
+  console.log(socket.request);
   if (!socket.request.session || !socket.request.session?.passport) {
     socket.emit('error', 'No session');
     socket.disconnect();
@@ -185,6 +190,16 @@ io.on('connection', (socket) => {
   });
 });
 
+const chatIO = io.of('/socket.io/chat');
+chatIO.on('connection', (socket) => {
+  console.log('New chat connection');
+  chatIO.emit('pronounsUpdate', { userId: '1', pronouns: 'sdaw' });
+});
+
 server.listen(process.env.PORT, () => {
   console.log('Server listening on port ' + process.env.PORT);
 });
+
+module.exports.updatePronouns = (userId, pronouns) => {
+  chatIO.emit('pronounsUpdate', { userId, pronouns });
+};
