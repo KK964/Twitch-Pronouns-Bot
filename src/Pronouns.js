@@ -1,9 +1,11 @@
 const { mysql, twitchApi } = require('./vars');
+const { updatePronouns } = require('./webserver/Server');
 
 const userIds = new Map();
 const pronouns = new Map();
 
 function setPronouns(userid, displayName, userPronouns) {
+  updatePronouns(userid, userPronouns);
   userIds.set(displayName, userid);
   pronouns.set(userid, userPronouns);
   mysql

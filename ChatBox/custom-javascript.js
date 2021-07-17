@@ -37,7 +37,6 @@ document.addEventListener('onLoad', function (obj) {
 // Run on message received
 document.addEventListener('onEventReceived', function (obj) {
   if (obj.detail.command !== 'PRIVMSG') return;
-  if (!obj.detail.hasOwnProperty('user-id')) return;
   var userId = obj.detail.payload.tags['user-id'];
   var latest = $('#log>div').last()[0];
   var name = latest.firstElementChild.children[1];
