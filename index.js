@@ -12,9 +12,10 @@ const client = new tmi.client({
 
 client.connect();
 
+const server = require('./src/webserver/Server');
+
 client.on('connected', () => {
   console.log('connected');
-  require('./src/webserver/Server');
   console.log('Joining Channels');
   joinChannels();
 });
@@ -25,6 +26,10 @@ function joinChannels() {
     rows.forEach((row) => {
       joinQueue.add(async () => {
         const channel = await vars.twitchApi.userData(row.channel);
+        if (channel?.error) {
+          console.log(channel.error, channel.message);
+          return;
+        }
         client.join(channel.data[0].login);
       });
     });

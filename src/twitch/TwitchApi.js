@@ -1,5 +1,4 @@
 const fetch = require('node-fetch');
-const jwt = require('jsonwebtoken');
 
 const idMap = new Map();
 
@@ -7,7 +6,7 @@ let verifier;
 
 module.exports = class TwitchApi {
   constructor() {
-    this.getCredentials();
+    //this.getCredentials();
   }
 
   getUsersChat(user) {
@@ -43,7 +42,8 @@ module.exports = class TwitchApi {
   }
 
   userData(id) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+      if (!this.clientCredentials) await this.getCredentials();
       var url = `https://api.twitch.tv/helix/users?id=${id}`;
       var options = {
         method: 'GET',
