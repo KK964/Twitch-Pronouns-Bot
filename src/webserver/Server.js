@@ -17,8 +17,6 @@ const expressSession = require('express-session');
 const request = require('request');
 const ejs = require('ejs');
 
-const vars = require('../vars');
-
 const { pronouns, channels } = require('../Pronouns');
 const { twitchApi, mysql } = require('../vars');
 
@@ -134,12 +132,11 @@ app.get('/api/pronouns/:user', async (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log(socket.request);
   if (!socket.request.session || !socket.request.session?.passport) {
     socket.emit('error', 'No session');
     socket.disconnect();
     console.log('Resetting user session');
-  } else console.log('New user connected', socket.id, socket.request.session);
+  } else console.log('New user connected', socket.id);
 
   socket.on('disconnect', () => {
     console.log('User disconnected', socket.id);
@@ -162,7 +159,6 @@ io.on('connection', (socket) => {
   socket.on('getPronouns', (user, callback) => {
     console.log('User requesting pronouns for', user);
     pronouns.getUserPronouns(user).then((pronouns) => {
-      console.log(pronouns);
       callback({ pronouns });
     });
   });
@@ -193,7 +189,6 @@ io.on('connection', (socket) => {
 const chatIO = io.of('/socket.io/chat');
 chatIO.on('connection', (socket) => {
   console.log('New chat connection');
-  chatIO.emit('pronounsUpdate', { userId: '1', pronouns: 'sdaw' });
 });
 
 server.listen(process.env.PORT, () => {
